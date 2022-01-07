@@ -3,6 +3,7 @@ set(mapgen_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/dungeongen.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mapgen_carpathian.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mapgen.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/mapgen_dfimport.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mapgen_flat.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mapgen_fractal.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/mapgen_singlenode.cpp
