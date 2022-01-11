@@ -15,9 +15,147 @@
 #define HEIGHT 272
 
 // TODO: figure out width-height order
-s16 m_terrain[WIDTH][HEIGHT] =
+s16 terrain_inc[WIDTH][HEIGHT] =
 #include "df_terrain.inc"
 ;
+
+namespace // private stuff
+{
+
+constexpr f64 square(f64 u) { return u * u; }
+
+class Grid
+{
+public:
+	Grid(v2s16 dims, const s16 *tiles, s16 default_):
+		m_dims(dims), m_tiles(tiles), m_default(default_)
+	{}
+
+	~Grid() = default;
+
+	s16 get(v2s16 pos) const
+	{
+		pos.X += m_dims.X / 2;
+		pos.Y = -pos.Y + m_dims.Y / 2;
+		if (pos.X < 0 || pos.X >= m_dims.X || pos.Y < 0 || pos.Y >= m_dims.Y)
+			return m_default;
+		return m_tiles[pos.Y * m_dims.Y + pos.X];
+	}
+
+	s16 getWidth() const { return m_dims.X; }
+	s16 getHeight() const { return m_dims.Y; }
+
+private:
+	v2s16 m_dims;
+	const s16 *m_tiles;
+	s16 m_default;
+};
+
+class Interpolator
+{
+public:
+	Interpolator() = default;
+
+	Interpolator(f64 x, f64 y, f64 r, f64 sl, f64 sr)
+	{
+		f64 xl = x - r;
+		f64 yl = y - sl * r;
+		m_a = (sr - sl) / 4 / r;
+		m_b = sl - 2 * m_a * xl;
+		m_c = yl - m_a * xl * xl - m_b * xl;
+	}
+
+	~Interpolator() = default;
+
+	f64 operator()(f64 u) const { return m_a * u * u + m_b * u + m_c; }
+
+private:
+	f64 m_a, m_b, m_c;
+};
+
+Interpolator makeXInterpolator(v2s16 cp, s16 chunk_side, const Grid &grid)
+{
+	f64 el = grid.get(cp);
+	f64 el_m = grid.get(cp - v2s16(1, 0));
+	f64 el_p = grid.get(cp + v2s16(1, 0));
+	return Interpolator((cp.X + 0.5) * chunk_side, el, chunk_side / 2, (el - el_m) / chunk_side, (el_p - el) / chunk_side);
+}
+
+Interpolator makeZInterpolator(v2s16 cp, s16 chunk_side, const Grid &grid)
+{
+	f64 el = grid.get(cp);
+	f64 el_m = grid.get(cp - v2s16(0, 1));
+	f64 el_p = grid.get(cp + v2s16(0, 1));
+	return Interpolator((cp.Y + 0.5) * chunk_side, el, chunk_side / 2, (el - el_m) / chunk_side, (el_p - el) / chunk_side);
+}
+
+class ChunkInterpolator
+{
+public:
+	ChunkInterpolator(v3s16 minp, v3s16 maxp, s16 chunk_side, const Grid &grid);
+
+	~ChunkInterpolator() = default;
+
+	f64 operator()(v2s16 pos) const;
+
+private:
+	Interpolator m_int_x_ne, m_int_x_nw, m_int_x_sw, m_int_x_se;
+	Interpolator m_int_z_ne, m_int_z_nw, m_int_z_sw, m_int_z_se;
+	s16 m_chunk_side;
+	s16 m_min_x, m_min_z, m_max_x, m_max_z, m_mid_x, m_mid_z;
+};
+
+ChunkInterpolator::ChunkInterpolator(v3s16 minp, v3s16 maxp, s16 chunk_side, const Grid &grid)
+{
+	m_chunk_side = chunk_side;
+	m_min_x = minp.X;
+	m_min_z = minp.Z;
+	m_max_x = maxp.X;
+	m_max_z = maxp.Z;
+	m_mid_x = m_min_x + m_chunk_side / 2 + BREAK_BIAS;
+	m_mid_z = m_min_z + m_chunk_side / 2 + BREAK_BIAS;
+	v2s16 cp(std::floor((f64) m_min_x / m_chunk_side),
+			std::floor((f64) m_min_z / m_chunk_side));
+	m_int_x_sw = makeXInterpolator(cp, m_chunk_side, grid);
+	m_int_x_se = makeXInterpolator(cp + v2s16(1, 0), m_chunk_side, grid);
+	m_int_x_nw = makeXInterpolator(cp + v2s16(0, 1), m_chunk_side, grid);
+	m_int_x_ne = makeXInterpolator(cp + v2s16(1, 1), m_chunk_side, grid);
+	m_int_z_sw = makeZInterpolator(cp, m_chunk_side, grid);
+	m_int_z_se = makeZInterpolator(cp + v2s16(1, 0), m_chunk_side, grid);
+	m_int_z_nw = makeZInterpolator(cp + v2s16(0, 1), m_chunk_side, grid);
+	m_int_z_ne = makeZInterpolator(cp + v2s16(1, 1), m_chunk_side, grid);
+}
+
+f64 ChunkInterpolator::operator()(v2s16 pos) const
+{
+	s16 x = pos.X, z = pos.Y;
+	
+	f64 y_e, y_n, y_w, y_s;
+	if (x < m_mid_x) {
+		y_n = m_int_x_nw(x);
+		y_s = m_int_x_sw(x);
+	} else {
+		y_n = m_int_x_ne(x);
+		y_s = m_int_x_se(x);
+	}
+	if (z < m_mid_z) {
+		y_e = m_int_z_se(z);
+		y_w = m_int_z_sw(z);
+	} else {
+		y_e = m_int_z_ne(z);
+		y_w = m_int_z_nw(z);
+	}
+
+	f64 w_e = square(m_chunk_side - (m_max_x - x));
+	f64 w_n = square(m_chunk_side - (m_max_z - z));
+	f64 w_w = square(m_chunk_side - (x - m_min_x));
+	f64 w_s = square(m_chunk_side - (z - m_min_z));
+
+	f64 y_avg = (y_e * w_e + y_n * w_n + y_w * w_w + y_s * w_s) / (w_e + w_n + w_w + w_s);
+	return y_avg;
+}
+
+} // end private namespace
 
 MapgenDFImport::MapgenDFImport(MapgenParams *params, EmergeParams *emerge):
 	MapgenBasic(MAPGEN_DFIMPORT, params, emerge)
@@ -27,39 +165,38 @@ MapgenDFImport::MapgenDFImport(MapgenParams *params, EmergeParams *emerge):
 	NoiseParams np;
 	noise_filler_depth = new Noise(&np, seed, 5, 5);
 		//new Noise(&params->np_filler_depth,    seed, csize.X, csize.Z);
+
+	m_terrain = new s16[WIDTH * HEIGHT];
+	for (s16 z = 0; z < HEIGHT; ++z)
+	for (s16 x = 0; x < WIDTH; ++x) {
+		m_terrain[z * HEIGHT + x] = (terrain_inc[z][x] - 98) * 2;
+	}
+
+	{
+		m_heat = new s16[WIDTH * HEIGHT];
+		Noise noise(&np, seed + 1, WIDTH, HEIGHT);
+		noise.perlinMap2D(0, 0);
+		for (s16 z = 0; z < HEIGHT; ++z)
+		for (s16 x = 0; x < WIDTH; ++x) {
+			m_heat[z * HEIGHT + x] = std::round(noise.noise_buf[z * HEIGHT + x] * 200 + 10);
+		}
+	}
+
+	{
+		m_humidity = new s16[WIDTH * HEIGHT];
+		Noise noise(&np, seed + 2, WIDTH, HEIGHT);
+		noise.perlinMap2D(0, 0);
+		for (s16 z = 0; z < HEIGHT; ++z)
+		for (s16 x = 0; x < WIDTH; ++x) {
+			m_humidity[z * HEIGHT + x] = std::round(noise.noise_buf[z * HEIGHT + x] * 200 + 10);
+		}
+	}
 }
 
-MapgenDFImport::Interpolator::Interpolator(f64 x, f64 y, f64 r, f64 sl, f64 sr)
+MapgenDFImport::~MapgenDFImport()
 {
-	f64 xl = x - r;
-	f64 yl = y - sl * r;
-	m_a = (sr - sl) / 4 / r;
-	m_b = sl - 2 * m_a * xl;
-	m_c = yl - m_a * xl * xl - m_b * xl;
-}
-
-s16 MapgenDFImport::getElevation(v2s16 cp)
-{
-	s16 z = -cp.Y + HEIGHT / 2;
-	s16 x = cp.X + WIDTH / 2;
-	s16 el = z >= 0 && z < HEIGHT && x >= 0 && x < WIDTH ? m_terrain[z][x] : 0;
-	return (el - 98) * 2;
-}
-
-MapgenDFImport::Interpolator MapgenDFImport::makeXInterpolator(v2s16 cp)
-{
-	f64 el = getElevation(cp);
-	f64 el_m = getElevation(cp - v2s16(1, 0));
-	f64 el_p = getElevation(cp + v2s16(1, 0));
-	return Interpolator((cp.X + 0.5) * m_chunk_side, el, m_chunk_side / 2, (el - el_m) / m_chunk_side, (el_p - el) / m_chunk_side);
-}
-
-MapgenDFImport::Interpolator MapgenDFImport::makeZInterpolator(v2s16 cp)
-{
-	f64 el = getElevation(cp);
-	f64 el_m = getElevation(cp - v2s16(0, 1));
-	f64 el_p = getElevation(cp + v2s16(0, 1));
-	return Interpolator((cp.Y + 0.5) * m_chunk_side, el, m_chunk_side / 2, (el - el_m) / m_chunk_side, (el_p - el) / m_chunk_side);
+	delete[] m_heat;
+	delete[] m_terrain;
 }
 
 void MapgenDFImport::makeChunk(BlockMakeData *data)
@@ -81,66 +218,65 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 
 	blockseed = getBlockSeed2(full_node_min, seed);
 
-	//v3s16 cp3d = EmergeManager::getContainingChunk(blockpos_min, m_chunk_side / MAP_BLOCKSIZE);
-	v2s16 cp(std::floor((f64) node_min.X / m_chunk_side), std::floor((f64) node_min.Z / m_chunk_side));
+	{
+		Grid grid(v2s16(WIDTH, HEIGHT), m_terrain, -98 * 2);
+		ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
 
-	v2s16 midp(node_min.X + m_chunk_side / 2, node_min.Z + m_chunk_side / 2);
-	
-	Interpolator int_x_sw = makeXInterpolator(cp);
-	Interpolator int_x_se = makeXInterpolator(cp + v2s16(1, 0));
-	Interpolator int_x_nw = makeXInterpolator(cp + v2s16(0, 1));
-	Interpolator int_x_ne = makeXInterpolator(cp + v2s16(1, 1));
-	Interpolator int_z_sw = makeZInterpolator(cp);
-	Interpolator int_z_se = makeZInterpolator(cp + v2s16(1, 0));
-	Interpolator int_z_nw = makeZInterpolator(cp + v2s16(0, 1));
-	Interpolator int_z_ne = makeZInterpolator(cp + v2s16(1, 1));
-
-	MapNode n_air(CONTENT_AIR);
-	MapNode n_water(c_water_source);
-	MapNode n_stone(c_stone);
-
-	for (s16 z = node_min.Z; z <= node_max.Z; ++z)
-	for (s16 x = node_min.X; x <= node_max.X; ++x) {
-		f64 y_e = (z < midp.Y + BREAK_BIAS ? int_z_se : int_z_ne)(z);
-		f64 y_n = (x < midp.X + BREAK_BIAS ? int_x_nw : int_x_ne)(x);
-		f64 y_w = (z < midp.Y + BREAK_BIAS ? int_z_sw : int_z_nw)(z);
-		f64 y_s = (x < midp.X + BREAK_BIAS ? int_x_sw : int_x_se)(x);
-
-		f64 w_e = (m_chunk_side - (node_max.X - x)) * (m_chunk_side - (node_max.X - x));
-		f64 w_n = (m_chunk_side - (node_max.Z - z)) * (m_chunk_side - (node_max.Z - z));
-		f64 w_w = (m_chunk_side - (x - node_min.X)) * (m_chunk_side - (x - node_min.X));
-		f64 w_s = (m_chunk_side - (z - node_min.Z)) * (m_chunk_side - (z - node_min.Z));
-
-		f64 y_avg = (y_e * w_e + y_n * w_n + y_w * w_w + y_s * w_s) / (w_e + w_n + w_w + w_s);
-		s16 y_stone = std::round(y_avg);
-		s16 y = node_max.Y;
-		for (; y > 1 && y > y_stone && y >= node_min.Y; --y) {
-			u32 i = vm->m_area.index(x, y, z);
-			if (vm->m_data[i].getContent() == CONTENT_IGNORE)
-				vm->m_data[i] = n_air;
+		u32 i = 0;
+		for (s16 z = node_min.Z; z <= node_max.Z; ++z)
+		for (s16 x = node_min.X; x <= node_max.X; ++x, ++i) {
+			heightmap[i] = std::round(interp(v2s16(x, z)));
 		}
-		for (; y > y_stone && y >= node_min.Y; --y) {
-			vm->m_data[vm->m_area.index(x, y, z)] = n_water;
-		}
-		for (; y >= node_min.Y; --y) {
-			vm->m_data[vm->m_area.index(x, y, z)] = n_stone;
+	}
+
+	{
+		MapNode n_air(CONTENT_AIR);
+		MapNode n_water(c_water_source);
+		MapNode n_stone(c_stone);
+
+		for (s16 z = node_min.Z; z <= node_max.Z; ++z)
+		for (s16 y = node_min.Y; y <= node_max.Y; ++y) {
+			u32 i2d = (z - node_min.Z) * m_chunk_side;
+			u32 i3d = vm->m_area.index(node_min.X, y, z);
+			for (s16 x = node_min.X; x <= node_max.X; ++x, ++i2d, ++i3d) {
+				i3d = vm->m_area.index(x, y, z);
+				if (vm->m_data[i3d].getContent() == CONTENT_IGNORE) {
+					s16 height = heightmap[i2d];
+					vm->m_data[i3d] = y <= height ? n_stone : y <= 1 ? n_water : n_air;
+				}
+			}
 		}
 	}
 
 	// Generate base and mountain terrain
 	s16 stone_surface_max_y = node_max.Y;
 
-	// Create heightmap
-	updateHeightmap(node_min, node_max);
-
 	// Init biome generator, place biome-specific nodes, and build biomemap
 	if (flags & MG_BIOMES) {
-		biomegen->calcBiomeNoise(node_min);
+		BiomeGenOriginal *bg = (BiomeGenOriginal *) biomegen;
+		{
+			Grid grid(v2s16(WIDTH, HEIGHT), m_heat, 0);
+			ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
+			u32 i = 0;
+			for (s16 z = node_min.Z; z <= node_max.Z; ++z)
+			for (s16 x = node_min.X; x <= node_max.X; ++x, ++i) {
+				bg->heatmap[i] = interp(v2s16(x, z));
+			}
+		}
+		{
+			Grid grid(v2s16(WIDTH, HEIGHT), m_humidity, 0);
+			ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
+			u32 i = 0;
+			for (s16 z = node_min.Z; z <= node_max.Z; ++z)
+			for (s16 x = node_min.X; x <= node_max.X; ++x, ++i) {
+				bg->humidmap[i] = interp(v2s16(x, z));
+			}
+		}
 		generateBiomes();
 	}
 
 	// Generate tunnels, caverns and large randomwalk caves
-	if (flags & MG_CAVES) {
+	if (flags & 0) {
 		// Generate tunnels first as caverns confuse them
 		generateCavesNoiseIntersection(stone_surface_max_y);
 
@@ -176,7 +312,7 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 		dustTopNodes();
 
 	// Calculate lighting
-	if (1)
+	if (flags & MG_LIGHT)
 		calcLighting(node_min - v3s16(1, 1, 1) * MAP_BLOCKSIZE,
 			node_max + v3s16(1, 0, 1) * MAP_BLOCKSIZE, full_node_min, full_node_max);
 
