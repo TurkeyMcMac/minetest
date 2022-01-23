@@ -27,10 +27,12 @@ public:
 	int getSpawnLevelAtPoint(v2s16 p);
 
 private:
-	s16 m_chunk_side = 80;
+	s16 m_chunk_side;
 	s16 *m_terrain;
+	v2s16 m_terrain_dims;
 	s16 *m_heat;
+	v2s16 m_heat_dims;
 	s16 *m_humidity;
-
-	friend class BiomeGenOriginal;
+	v2s16 m_humidity_dims;
+	Noise *m_heat_noise;
 };

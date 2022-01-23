@@ -7,27 +7,31 @@
 #include "mg_decoration.h"
 #include "mg_ore.h"
 #include <cmath>
+#include <memory>
 
 // TODO: IDK why this is necessary or what the root cause of discontinuity is.
 #define BREAK_BIAS (-6)
-
-#define WIDTH 272
-#define HEIGHT 272
-
-// TODO: figure out width-height order
-s16 terrain_inc[WIDTH][HEIGHT] =
-#include "df_terrain.inc"
-;
 
 namespace // private stuff
 {
 
 constexpr f64 square(f64 u) { return u * u; }
 
+void readGrid(std::ifstream &in, v2s16 &dims, s16 *&data)
+{
+	dims.X = readU16(in);
+	dims.Y = readU16(in);
+	s32 n_elems = dims.X * dims.Y;
+	data = new s16[n_elems];
+	for (s32 i = 0; i < n_elems; ++i) {
+		data[i] = readU16(in);
+	}
+}
+
 class Grid
 {
 public:
-	Grid(v2s16 dims, const s16 *tiles, s16 default_):
+	Grid(v2s16 dims, s16 *tiles, s16 default_):
 		m_dims(dims), m_tiles(tiles), m_default(default_)
 	{}
 
@@ -47,7 +51,7 @@ public:
 
 private:
 	v2s16 m_dims;
-	const s16 *m_tiles;
+	s16 *m_tiles;
 	s16 m_default;
 };
 
@@ -158,7 +162,8 @@ f64 ChunkInterpolator::operator()(v2s16 pos) const
 } // end private namespace
 
 MapgenDFImport::MapgenDFImport(MapgenParams *params, EmergeParams *emerge):
-	MapgenBasic(MAPGEN_DFIMPORT, params, emerge)
+	MapgenBasic(MAPGEN_DFIMPORT, params, emerge),
+	m_chunk_side(params->chunksize * MAP_BLOCKSIZE)
 {
 	// 2D noise
 		//new Noise(&params->np_height_select,   seed, csize.X, csize.Z);
@@ -166,37 +171,36 @@ MapgenDFImport::MapgenDFImport(MapgenParams *params, EmergeParams *emerge):
 	noise_filler_depth = new Noise(&np, seed, 5, 5);
 		//new Noise(&params->np_filler_depth,    seed, csize.X, csize.Z);
 
-	m_terrain = new s16[WIDTH * HEIGHT];
-	for (s16 z = 0; z < HEIGHT; ++z)
-	for (s16 x = 0; x < WIDTH; ++x) {
-		m_terrain[z * HEIGHT + x] = (terrain_inc[z][x] - 98) * 2;
+	np.spread = v3f(6, 6, 6);
+	np.octaves = 3;
+	np.scale = 5;
+	m_heat_noise = new Noise(&np, seed + 2, m_chunk_side, m_chunk_side);
+
+	std::ifstream terrain_in("el.dat", std::ios::binary);
+	readGrid(terrain_in, m_terrain_dims, m_terrain);
+	for (s32 i = 0; i < (s32) m_terrain_dims.X * m_terrain_dims.Y; ++i) {
+		m_terrain[i] = (m_terrain[i] - 98) * 2;
 	}
 
-	{
-		m_heat = new s16[WIDTH * HEIGHT];
-		Noise noise(&np, seed + 1, WIDTH, HEIGHT);
-		noise.perlinMap2D(0, 0);
-		for (s16 z = 0; z < HEIGHT; ++z)
-		for (s16 x = 0; x < WIDTH; ++x) {
-			m_heat[z * HEIGHT + x] = std::round(noise.noise_buf[z * HEIGHT + x] * 200 + 10);
-		}
+	std::ifstream heat_in("tmp.dat", std::ios::binary);
+	readGrid(heat_in, m_heat_dims, m_heat);
+	for (s32 i = 0; i < (s32) m_heat_dims.X * m_heat_dims.Y; ++i) {
+		m_heat[i] = std::round((m_heat[i] - 91) * 1.5);
 	}
 
-	{
-		m_humidity = new s16[WIDTH * HEIGHT];
-		Noise noise(&np, seed + 2, WIDTH, HEIGHT);
-		noise.perlinMap2D(0, 0);
-		for (s16 z = 0; z < HEIGHT; ++z)
-		for (s16 x = 0; x < WIDTH; ++x) {
-			m_humidity[z * HEIGHT + x] = std::round(noise.noise_buf[z * HEIGHT + x] * 200 + 10);
-		}
+	std::ifstream humidity_in("rain.dat", std::ios::binary);
+	readGrid(humidity_in, m_humidity_dims, m_humidity);
+	for (s32 i = 0; i < (s32) m_humidity_dims.X * m_humidity_dims.Y; ++i) {
+		m_humidity[i] = m_humidity[i] * 1;
 	}
 }
 
 MapgenDFImport::~MapgenDFImport()
 {
+	delete[] m_humidity;
 	delete[] m_heat;
 	delete[] m_terrain;
+	delete m_heat_noise;
 }
 
 void MapgenDFImport::makeChunk(BlockMakeData *data)
@@ -219,9 +223,8 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 	blockseed = getBlockSeed2(full_node_min, seed);
 
 	{
-		Grid grid(v2s16(WIDTH, HEIGHT), m_terrain, -98 * 2);
+		Grid grid(m_terrain_dims, m_terrain, -98 * 2);
 		ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
-
 		u32 i = 0;
 		for (s16 z = node_min.Z; z <= node_max.Z; ++z)
 		for (s16 x = node_min.X; x <= node_max.X; ++x, ++i) {
@@ -255,16 +258,17 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 	if (flags & MG_BIOMES) {
 		BiomeGenOriginal *bg = (BiomeGenOriginal *) biomegen;
 		{
-			Grid grid(v2s16(WIDTH, HEIGHT), m_heat, 0);
+			Grid grid(m_heat_dims, m_heat, 0);
 			ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
+			float *noise = m_heat_noise->perlinMap2D(node_min.X, node_min.Z);
 			u32 i = 0;
 			for (s16 z = node_min.Z; z <= node_max.Z; ++z)
 			for (s16 x = node_min.X; x <= node_max.X; ++x, ++i) {
-				bg->heatmap[i] = interp(v2s16(x, z));
+				bg->heatmap[i] = interp(v2s16(x, z)) + noise[i];
 			}
 		}
 		{
-			Grid grid(v2s16(WIDTH, HEIGHT), m_humidity, 0);
+			Grid grid(m_humidity_dims, m_humidity, 0);
 			ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
 			u32 i = 0;
 			for (s16 z = node_min.Z; z <= node_max.Z; ++z)
@@ -272,6 +276,7 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 				bg->humidmap[i] = interp(v2s16(x, z));
 			}
 		}
+		//bg->calcBiomeNoise(node_min);
 		generateBiomes();
 	}
 
