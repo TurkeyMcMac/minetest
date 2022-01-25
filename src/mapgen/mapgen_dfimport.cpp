@@ -326,6 +326,12 @@ void MapgenDFImport::makeChunk(BlockMakeData *data)
 
 int MapgenDFImport::getSpawnLevelAtPoint(v2s16 p)
 {
-	// TODO
-	return 10;
+	v3s16 bp = getContainerPos(v3s16(p.X, 0, p.Y), MAP_BLOCKSIZE);
+	v3s16 cp = EmergeManager::getContainingChunk(bp, m_chunk_side / MAP_BLOCKSIZE);
+	v3s16 node_min = cp * MAP_BLOCKSIZE;
+	v3s16 node_max = node_min + m_chunk_side - 1;
+
+	Grid grid(m_terrain_dims, m_terrain, -98 * 2);
+	ChunkInterpolator interp(node_min, node_max, m_chunk_side, grid);
+	return std::round(interp(p));
 }
