@@ -1967,18 +1967,20 @@ void ServerEnvironment::activateStoredObjects(MapBlock *block, u32 dtime_s,
 	SetInScope<bool> activation_lock(m_object_activation_locked, true);
 
 	// Activate stored objects
-	std::vector<StaticObject> new_stored;
-	for (const StaticObject &s_obj : block->m_static_objects.m_stored) {
+	std::vector<StaticObject> &stored = block->m_static_objects.m_stored;
+	for (std::size_t i = 0; i < stored.size();) {
+		StaticObject &s_obj = stored[i];
+
 		// Check the precondition to activation if it is present.
 		if (condition != nullptr && !condition(s_obj)) {
-			new_stored.push_back(s_obj);
+			++i;
 			continue;
 		}
 
 		// Create an active object from the data
 		ServerActiveObject *obj = createSAO((ActiveObjectType) s_obj.type, s_obj.pos,
 			s_obj.data);
-		// If couldn't create object, store static data back.
+		// If couldn't create object, keep it stored.
 		if (!obj) {
 			errorstream<<"ServerEnvironment::activateStoredObjects(): "
 				<<"failed to create active object from static object "
@@ -1986,7 +1988,7 @@ void ServerEnvironment::activateStoredObjects(MapBlock *block, u32 dtime_s,
 				<<" type="<<(int)s_obj.type<<" data:"<<std::endl;
 			print_hexdump(verbosestream, s_obj.data);
 
-			new_stored.push_back(s_obj);
+			++i;
 			continue;
 		}
 		verbosestream<<"ServerEnvironment::activateStoredObjects(): "
@@ -1994,13 +1996,11 @@ void ServerEnvironment::activateStoredObjects(MapBlock *block, u32 dtime_s,
 			<<" type="<<(int)s_obj.type<<std::endl;
 		// This will also add the object to the active static list
 		addActiveObjectRaw(obj, false, dtime_s);
-	}
 
-	// Clear stored list
-	block->m_static_objects.m_stored.clear();
-	// Add leftover failed stuff to stored list
-	for (const StaticObject &s_obj : new_stored) {
-		block->m_static_objects.m_stored.push_back(s_obj);
+		// Remove this static object
+		if (i + 1 < stored.size())
+			s_obj = std::move(stored.back());
+		stored.pop_back();
 	}
 
 	/*
