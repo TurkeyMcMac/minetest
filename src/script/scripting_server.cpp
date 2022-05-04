@@ -36,6 +36,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lua_api/l_nodetimer.h"
 #include "lua_api/l_noise.h"
 #include "lua_api/l_object.h"
+#include "lua_api/l_packedqueue.h"
 #include "lua_api/l_playermeta.h"
 #include "lua_api/l_particles.h"
 #include "lua_api/l_rollback.h"
@@ -137,6 +138,7 @@ void ServerScripting::InitializeModApi(lua_State *L, int top)
 	ItemStackMetaRef::Register(L);
 	LuaAreaStore::Register(L);
 	LuaItemStack::Register(L);
+	LuaPackedQueue::Register(L);
 	LuaPerlinNoise::Register(L);
 	LuaPerlinNoiseMap::Register(L);
 	LuaPseudoRandom::Register(L);
@@ -172,6 +174,7 @@ void ServerScripting::InitializeAsync(lua_State *L, int top)
 {
 	// classes
 	LuaItemStack::Register(L);
+	LuaPackedQueue::Register(L);
 	LuaPerlinNoise::Register(L);
 	LuaPerlinNoiseMap::Register(L);
 	LuaPseudoRandom::Register(L);

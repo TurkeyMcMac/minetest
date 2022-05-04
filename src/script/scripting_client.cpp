@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "lua_api/l_itemstackmeta.h"
 #include "lua_api/l_minimap.h"
 #include "lua_api/l_modchannels.h"
+#include "lua_api/l_packedqueue.h"
 #include "lua_api/l_particles_local.h"
 #include "lua_api/l_storage.h"
 #include "lua_api/l_sound.h"
@@ -73,6 +74,7 @@ void ClientScripting::InitializeModApi(lua_State *L, int top)
 	LuaLocalPlayer::Register(L);
 	LuaCamera::Register(L);
 	ModChannelRef::Register(L);
+	LuaPackedQueue::Register(L);
 
 	ModApiUtil::InitializeClient(L, top);
 	ModApiClient::Initialize(L, top);
