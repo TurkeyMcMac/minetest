@@ -1,3 +1,4 @@
+local insecure_environment = ...
 
 local scriptpath = core.get_builtin_path()
 local commonpath = scriptpath .. "common" .. DIR_DELIM
@@ -32,6 +33,7 @@ dofile(gamepath .. "detached_inventory.lua")
 assert(loadfile(gamepath .. "falling.lua"))(builtin_shared)
 dofile(gamepath .. "features.lua")
 dofile(gamepath .. "voxelarea.lua")
+assert(loadfile(gamepath .. "voxelmanip.lua"))(insecure_environment)
 dofile(gamepath .. "forceloading.lua")
 dofile(gamepath .. "statbars.lua")
 dofile(gamepath .. "knockback.lua")

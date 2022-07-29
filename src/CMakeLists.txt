@@ -716,6 +716,11 @@ else()
 		set(RELEASE_WARNING_FLAGS "")
 	endif()
 
+	if (USE_LUAJIT)
+		# Make symbols that start with "mtffi_" available to LuaJIT's FFI library.
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,--export-dynamic-symbol=mtffi_*")
+	endif()
+
 	if(APPLE AND USE_LUAJIT)
 		# required per http://luajit.org/install.html
 		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -pagezero_size 10000 -image_base 100000000")

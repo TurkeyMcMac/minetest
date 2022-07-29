@@ -1,3 +1,5 @@
+local insecure_environment = ...
+
 core.log("info", "Initializing asynchronous environment (game)")
 
 local function pack2(...)
@@ -22,6 +24,7 @@ assert(loadfile(commonpath .. "item_s.lua"))(builtin_shared)
 dofile(gamepath .. "misc_s.lua")
 dofile(gamepath .. "features.lua")
 dofile(gamepath .. "voxelarea.lua")
+assert(loadfile(gamepath .. "voxelmanip.lua"))(insecure_environment)
 
 -- Transfer of globals
 do
