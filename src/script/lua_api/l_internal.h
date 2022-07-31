@@ -27,6 +27,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #pragma once
 
 #include "common/c_internal.h"
+#include "util/basic_macros.h"
 
 #define luamethod(class, name) {#name, class::l_##name}
 
@@ -77,3 +78,12 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #define GET_PLAIN_ENV_PTR         \
 	MAP_LOCK_REQUIRED;            \
 	GET_PLAIN_ENV_PTR_NO_MAP_LOCK
+
+// LuaJIT FFI function prototypes.
+#if USE_LUAJIT
+#define FFI_FCT(rettype, name, ...) \
+	extern "C" rettype mtffi_##name(__VA_ARGS__) noexcept
+#else
+#define FFI_FCT(rettype, name, ...) \
+	UNUSED_ATTRIBUTE static rettype mtffi_##name(__VA_ARGS__) noexcept
+#endif

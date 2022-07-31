@@ -517,25 +517,50 @@ const luaL_Reg LuaVoxelManip::methods[] = {
 	{0,0}
 };
 
-#if USE_LUAJIT
 // LuaJIT FFI functions that are used in builtin/game/voxelmanip.lua.
-// These must not throw exceptions!
 
-extern "C" s32 mtffi_vm_get_node(LuaVoxelManip **ud, double x, double y, double z)
+FFI_FCT(int32_t, vm_get_node, void *ud, double x, double y, double z)
 {
-	MMVManip *vm = (*ud)->vm;
+	MMVManip *vm = (*(LuaVoxelManip **)ud)->vm;
 	v3s16 pos = doubleToInt(v3d(x, y, z), 1.0);
 	MapNode n = vm->getNodeNoExNoEmerge(pos);
 	u32 data = (u32)n.getContent() | ((u32)n.getParam1() << 16) | ((u32)n.getParam2() << 24);
-	return (s32)data;
+	return (int32_t)data;
 }
 
-extern "C" void mtffi_vm_set_node(LuaVoxelManip **ud, double x, double y, double z,
-		u16 content, u8 param1, u8 param2)
+FFI_FCT(void, vm_set_node, void *ud, double x, double y, double z,
+		uint16_t content, uint8_t param1, uint8_t param2)
 {
-	MMVManip *vm = (*ud)->vm;
+	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
 	v3s16 pos = doubleToInt(v3d(x, y, z), 1.0);
 	MapNode n(content, param1, param2);
 	vm->setNodeNoEmerge(pos, n);
 }
-#endif // USE_LUAJIT
+
+FFI_FCT(bool, vm_lock_area, void *ud)
+{
+	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
+	if (vm && !vm->m_area_locked) {
+		vm->m_area_locked = true;
+		return true;
+	}
+	return false;
+}
+
+FFI_FCT(void, vm_unlock_area, void *ud)
+{
+	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
+	vm->m_area_locked = false;
+}
+
+FFI_FCT(MapNode*, vm_get_data, void *ud)
+{
+	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
+	return vm->m_data;
+}
+
+FFI_FCT(int32_t, vm_get_volume, void *ud)
+{
+	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
+	return vm->m_area.getVolume();
+}

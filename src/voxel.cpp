@@ -136,6 +136,9 @@ void VoxelManipulator::addArea(const VoxelArea &area)
 	if(m_area.contains(area))
 		return;
 
+	if (m_area_locked)
+		throw BaseException("Cannot add an area to a VoxelManipulator while it is locked");
+
 	TimeTaker timer("addArea", &addarea_time);
 
 	// Calculate new area

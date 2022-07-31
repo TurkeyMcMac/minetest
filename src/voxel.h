@@ -494,6 +494,12 @@ public:
 	VoxelArea m_area;
 
 	/*
+		Lock to prevent addArea() when m_data is being directly accessed
+		This is to prevent invalid memory access
+	*/
+	bool m_area_locked = false;
+
+	/*
 		nullptr if data size is 0 (extent (0,0,0))
 		Data is stored as [z*h*w + y*h + x]
 	*/
