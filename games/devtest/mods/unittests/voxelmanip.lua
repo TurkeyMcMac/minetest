@@ -26,9 +26,11 @@ local function test_vm_accessors()
 
 	vm:set_node_at(pos, {name = "basenodes:desert_stone", param2 = 3})
 
-	local data = vm:get_data()
+	local data = {}
+	assert(data == vm:get_data(data))
 	local light_data = vm:get_light_data()
-	local param2_data = vm:get_param2_data()
+	local param2_data = {}
+	assert(param2_data == vm:get_param2_data(param2_data))
 	assert(#data == area:getVolume())
 	assert(#light_data == area:getVolume())
 	assert(#param2_data == area:getVolume())
