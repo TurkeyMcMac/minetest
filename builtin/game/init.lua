@@ -3,6 +3,7 @@ local insecure_environment = ...
 local scriptpath = core.get_builtin_path()
 local commonpath = scriptpath .. "common" .. DIR_DELIM
 local gamepath   = scriptpath .. "game".. DIR_DELIM
+local ffipath    = scriptpath .. "ffi_overrides" .. DIR_DELIM
 
 -- Shared between builtin files, but
 -- not exposed to outer context
@@ -33,11 +34,11 @@ dofile(gamepath .. "detached_inventory.lua")
 assert(loadfile(gamepath .. "falling.lua"))(builtin_shared)
 dofile(gamepath .. "features.lua")
 dofile(gamepath .. "voxelarea.lua")
-assert(loadfile(gamepath .. "voxelmanip.lua"))(insecure_environment)
 dofile(gamepath .. "forceloading.lua")
 dofile(gamepath .. "statbars.lua")
 dofile(gamepath .. "knockback.lua")
 dofile(gamepath .. "async.lua")
+assert(loadfile(ffipath .. "init.lua"))(insecure_environment)
 
 core.after(0, builtin_shared.cache_content_ids)
 

@@ -24,7 +24,10 @@ assert(loadfile(commonpath .. "item_s.lua"))(builtin_shared)
 dofile(gamepath .. "misc_s.lua")
 dofile(gamepath .. "features.lua")
 dofile(gamepath .. "voxelarea.lua")
-assert(loadfile(gamepath .. "voxelmanip.lua"))(insecure_environment)
+
+-- Load FFI overrides too.
+local ffipath = core.get_builtin_path() .. "ffi_overrides" .. DIR_DELIM
+assert(loadfile(ffipath .. "init.lua"))(insecure_environment)
 
 -- Transfer of globals
 do
