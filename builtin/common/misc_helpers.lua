@@ -11,10 +11,14 @@ do
 
 	-- Use LuaJIT's builtin table.new if available.
 	-- Fall back to Minetest's polyfill.
-	if not ie or not core.global_exists("jit") or not pcall(ie.require, "table.new") then
-		table.new = core.table_new
-	end
+	table.new = core.table_new
 	core.table_new = nil
+	if ie and core.global_exists("jit") then
+		local has_table_new, table_new = pcall(ie.require, "table.new")
+		if has_table_new then
+			table.new = table_new
+		end
+	end
 end
 
 --------------------------------------------------------------------------------
