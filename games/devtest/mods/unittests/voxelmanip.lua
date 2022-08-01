@@ -68,12 +68,13 @@ local function test_vm_invalid_input()
 	assert(not pcall(vm.set_node_at, vm, pos, {name = "odfnfj", param2 = 3}))
 	assert(not pcall(vm.get_node_at, vm, nil))
 	assert(not pcall(vm.set_node_at, vm, {}, {name = "air"}))
+	assert(not pcall(vm.set_data, vm, ""))
 
 	vm:set_node_at(pos, {name = "basenodes:desert_stone", param1 = true, param2 = 4.5})
 
-	local data = vm:get_data()
-	local light_data = vm:get_light_data()
-	local param2_data = vm:get_param2_data()
+	local data = vm:get_data(1)
+	local light_data = vm:get_light_data(2)
+	local param2_data = vm:get_param2_data(3)
 
 	assert(data[index] == core.get_content_id("basenodes:desert_stone"))
 	assert(light_data[index] == 0)

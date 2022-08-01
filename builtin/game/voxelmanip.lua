@@ -44,8 +44,8 @@ int32_t mtffi_vm_get_volume(void *ud);
 ]]
 
 local C = ffi.C
-local rawequal, rawget, rawset, tonumber, error, pcall =
-	_G.rawequal, _G.rawget, _G.rawset, _G.tonumber, _G.error, _G.pcall
+local rawequal, rawget, rawset, type, tonumber, error, pcall =
+	_G.rawequal, _G.rawget, _G.rawset, _G.type, _G.tonumber, _G.error, _G.pcall
 local table_new = _G.table.new
 local band, rshift = _G.bit.band, _G.bit.rshift
 local get_content_id = _G.core.get_content_id
@@ -90,7 +90,9 @@ local function bulk_getter(field)
 	local function get_protected(self, buf)
 		local data = C.mtffi_vm_get_data(self)
 		local volume = C.mtffi_vm_get_volume(self)
-		buf = buf or table_new(volume, 0)
+		if type(buf) ~= "table" then
+			buf = table_new(volume, 0)
+		end
 		for i = 1, volume do
 			rawset(buf, i, data[i - 1][field])
 		end
