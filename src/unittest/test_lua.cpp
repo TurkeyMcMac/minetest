@@ -92,12 +92,20 @@ extern "C" void mtffi_test_symbol() {}
 void TestLua::testLuaJITFFILinking()
 {
 	lua_State *L = luaL_newstate();
-	luaL_openlibs(L);
-	int result = luaL_dostring(L,
-		"local ffi = require('ffi')\n"
-		"ffi.cdef('void mtffi_test_symbol();')\n"
-		"assert(ffi.C.mtffi_test_symbol, 'Test symbol not found')\n"
-	);
-	UTEST(result == 0, "Lua error: %s", luaL_checkstring(L, -1));
+	assert(L);
+	try {
+		luaL_openlibs(L);
+		int result = luaL_dostring(L,
+			"local has_ffi, ffi = pcall(require, 'ffi')\n"
+			"if has_ffi then\n"
+			"    ffi.cdef('void mtffi_test_symbol();')\n"
+			"    assert(ffi.C.mtffi_test_symbol, 'Test symbol not found')\n"
+			"end\n"
+		);
+		UTEST(result == 0, "Lua error: %s", luaL_checkstring(L, -1));
+	} catch (...) {
+		lua_close(L);
+		throw;
+	}
 }
 #endif // USE_LUAJIT
