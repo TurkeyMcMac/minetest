@@ -735,7 +735,7 @@ else()
 			endif()
 		endif()
 		# Make symbols that start with "mtffi_" available to LuaJIT's FFI library.
-		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,--dynamic-list=dynamic_list.txt")
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -Wl,--dynamic-list=${CMAKE_SOURCE_DIR}/src/dynamic_list.txt")
 	endif()
 
 	if(MINGW)
