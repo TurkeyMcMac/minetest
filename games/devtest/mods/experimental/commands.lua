@@ -213,11 +213,16 @@ local function bench_vm_single_accessors()
 	return (finish - start) / 1000
 end
 
+local using_ffi = core.global_exists("jit") and core.settings:get_bool("use_ffi", true)
+
 minetest.register_chatcommand("bench_vm_bulk_accessors", {
 	params = "",
 	description = "Benchmark: VoxelManip bulk accessor functions",
 	func = function(name, param)
-		minetest.chat_send_player(name, "Benchmarking bulk accessors. Warming up ...");
+		minetest.chat_send_player(name, "Benchmarking bulk accessors with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
 
 		bench_vm_bulk_accessors()
 
@@ -233,7 +238,10 @@ minetest.register_chatcommand("bench_vm_single_accessors", {
 	params = "",
 	description = "Benchmark: VoxelManip single accessor functions",
 	func = function(name, param)
-		minetest.chat_send_player(name, "Benchmarking single accessors. Warming up ...");
+		minetest.chat_send_player(name, "Benchmarking single accessors with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
 
 		bench_vm_single_accessors()
 
