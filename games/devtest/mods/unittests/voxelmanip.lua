@@ -51,6 +51,10 @@ local function test_vm_accessors()
 	assert(node.param1 == 3)
 	assert(node.param2 == 255)
 
+	vm:set_node_at(pos:add(0.51), {name = "basenodes:desert_stone"})
+	assert(vm:get_node_at(pos:add(0.49)).name == "basenodes:ice")
+	assert(vm:get_node_at(pos:add(1)).name == "basenodes:desert_stone")
+
 	data[index] = 0xFFFF
 	vm:set_data(data)
 	assert(vm:get_node_at(pos).name == "unknown")
