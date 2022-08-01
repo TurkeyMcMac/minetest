@@ -71,7 +71,7 @@ local methodtable = metatable.__metatable
 
 function methodtable:get_node_at(pos)
 	check(self)
-	local data = tonumber(C.mtffi_vm_get_node(self, pos.x, pos.y, pos.z))
+	local data = C.mtffi_vm_get_node(self, pos.x, pos.y, pos.z)
 	local content = band(data, 0xffff)
 	local param1 = band(rshift(data, 16), 0xff)
 	local param2 = rshift(data, 24)
@@ -89,10 +89,10 @@ end
 local function bulk_getter(field)
 	local function get_protected(self, buf)
 		local data = C.mtffi_vm_get_data(self)
-		local volume = tonumber(C.mtffi_vm_get_volume(self))
+		local volume = C.mtffi_vm_get_volume(self)
 		buf = buf or table_new(volume, 0)
 		for i = 1, volume do
-			rawset(buf, i, tonumber(data[i - 1][field]))
+			rawset(buf, i, data[i - 1][field])
 		end
 		return buf
 	end
@@ -112,7 +112,7 @@ end
 local function bulk_setter(field)
 	local function set_protected(self, buf)
 		local data = C.mtffi_vm_get_data(self)
-		local volume = tonumber(C.mtffi_vm_get_volume(self))
+		local volume = C.mtffi_vm_get_volume(self)
 		for i = 1, volume do
 			data[i - 1][field] = tonumber(rawget(buf, i)) or 0
 		end
