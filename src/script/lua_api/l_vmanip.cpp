@@ -392,10 +392,9 @@ LuaVoxelManip::LuaVoxelManip(Map *map) : vm(new MMVManip(map))
 {
 }
 
-LuaVoxelManip::LuaVoxelManip(Map *map, v3s16 p1, v3s16 p2)
+LuaVoxelManip::LuaVoxelManip(Map *map, v3s16 p1, v3s16 p2):
+	vm(new MMVManip(map))
 {
-	vm = new MMVManip(map);
-
 	v3s16 bp1 = getNodeBlockPos(p1);
 	v3s16 bp2 = getNodeBlockPos(p2);
 	sortBoxVerticies(bp1, bp2);
