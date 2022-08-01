@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 extern "C" {
 #include <lua.h>
 #include <lauxlib.h>
+#include <lualib.h>
 }
 
 class TestLua : public TestBase
@@ -34,6 +35,9 @@ public:
 	void runTests(IGameDef *gamedef);
 
 	void testLuaDestructors();
+#if USE_LUAJIT
+	void testLuaJITFFILinking();
+#endif
 };
 
 static TestLua g_test_instance;
@@ -41,6 +45,9 @@ static TestLua g_test_instance;
 void TestLua::runTests(IGameDef *gamedef)
 {
 	TEST(testLuaDestructors);
+#if USE_LUAJIT
+	TEST(testLuaJITFFILinking);
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -77,3 +84,19 @@ void TestLua::testLuaDestructors()
 
 	UASSERT(did_destruct);
 }
+
+#if USE_LUAJIT
+extern "C" void mtffi_test_symbol() {}
+
+void TestLua::testLuaJITFFILinking()
+{
+	lua_State *L = luaL_newstate();
+	luaL_openlibs(L);
+	int result = luaL_dostring(L,
+		"local ffi = require('ffi')\n"
+		"ffi.cdef('void mtffi_test_symbol();')\n"
+		"assert(ffi.C.mtffi_test_symbol, 'Test symbol not found')\n"
+	);
+	UTEST(result == 0, "Lua error: %s", luaL_checkstring(L, -1));
+}
+#endif // USE_LUAJIT
