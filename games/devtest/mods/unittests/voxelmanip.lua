@@ -66,6 +66,8 @@ local function test_vm_invalid_input()
 	local index = area:indexp(pos)
 
 	assert(not pcall(vm.set_node_at, vm, pos, {name = "odfnfj", param2 = 3}))
+	assert(not pcall(vm.get_node_at, vm, nil))
+	assert(not pcall(vm.set_node_at, vm, {}, {name = "air"}))
 
 	vm:set_node_at(pos, {name = "basenodes:desert_stone", param1 = true, param2 = 4.5})
 
