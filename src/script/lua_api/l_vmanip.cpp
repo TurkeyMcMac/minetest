@@ -539,7 +539,7 @@ FFI_FCT(void, vm_set_node, void *ud, double x, double y, double z,
 FFI_FCT(bool, vm_lock_area, void *ud)
 {
 	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
-	if (vm && !vm->m_area_locked) {
+	if (!vm->m_area_locked) {
 		vm->m_area_locked = true;
 		return true;
 	}
