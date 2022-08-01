@@ -1,20 +1,25 @@
 -- This must load after builtin/game/item_s.lua, since since that file
 -- overrides core.get_content_id and core.get_name_from_content_id.
 
+if not core.settings:get_bool("use_ffi", true) then
+	return
+end
+
 if not core.global_exists("jit") then
 	-- Not LuaJIT, nothing to do.
 	return
 end
 
+
 local ie = ...
 local metatable = ie.debug.getregistry().VoxelManip
-local has_ffi, ffi = pcall(ie.require, "ffi")
 local get_real_metatable = ie.debug.getmetatable
-local table_new = table.new or ie.require("table.new")
-ie = nil
+local has_ffi, ffi = pcall(ie.require, "ffi")
 
 if not has_ffi then
 	-- FFI is required for the optimizations.
+	core.log("warning",
+		"Since the ffi library is absent, VoxelManip methods will not be using it.")
 	return
 end
 
