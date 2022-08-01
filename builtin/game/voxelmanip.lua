@@ -1,11 +1,11 @@
 -- This must load after builtin/game/item_s.lua, since since that file
 -- overrides core.get_content_id and core.get_name_from_content_id.
 
-if not core.settings:get_bool("use_ffi", true) then
+if not _G.core.settings:get_bool("use_ffi", true) then
 	return
 end
 
-if not core.global_exists("jit") then
+if not _G.core.global_exists("jit") then
 	-- Not LuaJIT, nothing to do.
 	return
 end
@@ -14,11 +14,11 @@ end
 local ie = ...
 local metatable = ie.debug.getregistry().VoxelManip
 local get_real_metatable = ie.debug.getmetatable
-local has_ffi, ffi = pcall(ie.require, "ffi")
+local has_ffi, ffi = _G.pcall(ie.require, "ffi")
 
 if not has_ffi then
 	-- FFI is required for the optimizations.
-	core.log("warning",
+	_G.core.log("warning",
 		"Since the ffi library is absent, VoxelManip methods will not be using it.")
 	return
 end
@@ -44,11 +44,12 @@ int32_t mtffi_vm_get_volume(void *ud);
 ]]
 
 local C = ffi.C
-local rawequal, rawget, rawset, tonumber, error, pcall = rawequal, rawget, rawset, tonumber, error, pcall
-local table_new = table.new
-local band, rshift = bit.band, bit.rshift
-local get_content_id = core.get_content_id
-local get_name_from_content_id = core.get_name_from_content_id
+local rawequal, rawget, rawset, tonumber, error, pcall =
+	_G.rawequal, _G.rawget, _G.rawset, _G.tonumber, _G.error, _G.pcall
+local table_new = _G.table.new
+local band, rshift = _G.bit.band, _G.bit.rshift
+local get_content_id = _G.core.get_content_id
+local get_name_from_content_id = _G.core.get_name_from_content_id
 
 local function check(self)
 	if not rawequal(get_real_metatable(self), metatable) then

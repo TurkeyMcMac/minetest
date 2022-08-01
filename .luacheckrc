@@ -52,6 +52,12 @@ files["builtin/game/voxelarea.lua"] = {
 	globals = { "VoxelArea" },
 }
 
+files["builtin/game/voxelmanip.lua"] = {
+	std = { read_globals = { "_G" } },
+	new_globals = {},
+	new_read_globals = {},
+}
+
 files["builtin/game/init.lua"] = {
 	globals = { "profiler" },
 }
