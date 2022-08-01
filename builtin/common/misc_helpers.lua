@@ -5,6 +5,19 @@
 local string_sub, string_find = string.sub, string.find
 
 --------------------------------------------------------------------------------
+-- Use insecure environment
+do
+	local ie = ...
+
+	-- Use LuaJIT's builtin table.new if available.
+	-- Fall back to Minetest's polyfill.
+	if not ie or not core.global_exists("jit") or not pcall(ie.require, "table.new") then
+		table.new = core.table_new
+	end
+	core.table_new = nil
+end
+
+--------------------------------------------------------------------------------
 local function basic_dump(o)
 	local tp = type(o)
 	if tp == "number" then

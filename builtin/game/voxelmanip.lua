@@ -40,6 +40,7 @@ int32_t mtffi_vm_get_volume(void *ud);
 
 local C = ffi.C
 local rawequal, rawget, rawset, tonumber, error, pcall = rawequal, rawget, rawset, tonumber, error, pcall
+local table_new = table.new
 local band, rshift = bit.band, bit.rshift
 local get_content_id = core.get_content_id
 local get_name_from_content_id = core.get_name_from_content_id

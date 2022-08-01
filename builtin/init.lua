@@ -23,6 +23,9 @@ end
 math.randomseed(os.time())
 minetest = core
 
+local insecure_environment =
+	core.request_insecure_environment and core.request_insecure_environment()
+
 -- Load other files
 local scriptdir = core.get_builtin_path()
 local gamepath = scriptdir .. "game" .. DIR_DELIM
@@ -33,10 +36,10 @@ local asyncpath = scriptdir .. "async" .. DIR_DELIM
 dofile(commonpath .. "vector.lua")
 dofile(commonpath .. "strict.lua")
 dofile(commonpath .. "serialize.lua")
-dofile(commonpath .. "misc_helpers.lua")
+assert(loadfile(commonpath .. "misc_helpers.lua"))(insecure_environment)
 
 if INIT == "game" then
-	assert(loadfile(gamepath .. "init.lua"))(core.request_insecure_environment())
+	assert(loadfile(gamepath .. "init.lua"))(insecure_environment)
 	assert(not core.get_http_api)
 elseif INIT == "mainmenu" then
 	local mm_script = core.settings:get("main_menu_script")
@@ -59,7 +62,7 @@ elseif INIT == "mainmenu" then
 elseif INIT == "async"  then
 	dofile(asyncpath .. "mainmenu.lua")
 elseif INIT == "async_game" then
-	assert(loadfile(asyncpath .. "game.lua"))(core.request_insecure_environment())
+	assert(loadfile(asyncpath .. "game.lua"))(insecure_environment)
 elseif INIT == "client" then
 	dofile(clientpath .. "init.lua")
 else
