@@ -41,7 +41,7 @@ local function test_vm_accessors()
 
 	data[index] = core.get_content_id("basenodes:ice")
 	light_data[index] = 3
-	param2_data[index] = 4
+	param2_data[index] = 255
 	vm:set_data(data)
 	vm:set_light_data(light_data)
 	vm:set_param2_data(param2_data)
@@ -49,7 +49,7 @@ local function test_vm_accessors()
 	local node = vm:get_node_at(pos)
 	assert(node.name == "basenodes:ice")
 	assert(node.param1 == 3)
-	assert(node.param2 == 4)
+	assert(node.param2 == 255)
 
 	data[index] = 0xFFFF
 	vm:set_data(data)
