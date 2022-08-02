@@ -17,8 +17,8 @@ if not has_ffi then
 	return
 end
 
-local ffipath = _G.core.get_builtin_path() .. "ffi_overrides" .. DIR_DELIM
+local ffipath = _G.core.get_builtin_path() .. "ffi_overrides" .. _G.DIR_DELIM
 
 if _G.VoxelManip then
-	assert(loadfile(ffipath .. "voxelmanip.lua"))(ffi, insecure_environment)
+	_G.assert(_G.loadfile(ffipath .. "voxelmanip.lua"))(ffi, insecure_environment)
 end
