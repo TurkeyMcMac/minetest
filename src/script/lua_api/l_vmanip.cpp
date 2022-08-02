@@ -516,7 +516,7 @@ const luaL_Reg LuaVoxelManip::methods[] = {
 	{0,0}
 };
 
-// LuaJIT FFI functions that are used in builtin/game/voxelmanip.lua.
+// LuaJIT FFI functions that are used in builtin/ffi_overrides/voxelmanip.lua.
 
 FFI_FCT(int32_t, vm_get_node, void *ud, double x, double y, double z)
 {
