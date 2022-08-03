@@ -84,6 +84,16 @@ local function test_vm_invalid_input()
 	assert(light_data[index] == 0)
 	assert(param2_data[index] ~= 0)
 
+	-- Unspecified results:
+	data[index] = -1.23
+	vm:set_data(data)
+	data[index] = 0 / 0
+	vm:set_data(data)
+	data[index] = 1 / 0
+	vm:set_data(data)
+	data[index] = -1 / 0
+	vm:set_data(data)
+
 	data[index] = "basenodes:ice"
 	light_data[index] = "d"
 	param2_data[index] = "4"
@@ -92,7 +102,8 @@ local function test_vm_invalid_input()
 	vm:set_param2_data(param2_data)
 
 	local node = vm:get_node_at(pos)
-	assert(node.name ~= "basenodes:ice")
+	assert(node.name == core.get_name_from_content_id(0))
+	assert(node.param1 == 0)
 	assert(node.param2 == 4)
 end
 unittests.register("test_vm_invalid_input", test_vm_invalid_input, {map=true})
