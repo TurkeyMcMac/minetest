@@ -69,6 +69,8 @@ local function test_vm_invalid_input()
 	local pos = vector.new(-4, 5, 10)
 	local index = area:indexp(pos)
 
+	assert(not pcall(vm.get_node_at))
+	assert(not pcall(vm.get_node_at, {}))
 	assert(not pcall(vm.set_node_at, vm, pos, {name = "odfnfj", param2 = 3}))
 	assert(not pcall(vm.get_node_at, vm, nil))
 	assert(not pcall(vm.set_node_at, vm, {}, {name = "air"}))
