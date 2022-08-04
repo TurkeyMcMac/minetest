@@ -30,9 +30,25 @@ struct MapNode *mtffi_vm_get_data(void *ud);
 int32_t mtffi_vm_get_volume(void *ud);
 ]]
 
-local function check(self)
-	if not rawequal(get_real_metatable(self), metatable) then
+local function check(o)
+	if not rawequal(get_real_metatable(o), metatable) then
 		error("VoxelManip method called on invalid object")
+	end
+end
+
+if _G.jit.version_num < 20100 then
+	-- Versions below 2.1 abort upon encountering debug.getmetatable; use a cache.
+	local check_raw = check
+	local cache = _G.setmetatable({}, {
+		__mode = "k",
+		__index = function(self, o)
+			check_raw(o)
+			self[o] = true
+			return true
+		end,
+	})
+	check = function(o)
+		return cache[o]
 	end
 end
 
