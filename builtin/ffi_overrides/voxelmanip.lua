@@ -38,17 +38,13 @@ end
 
 if _G.jit.version_num < 20100 then
 	-- Versions below 2.1 abort upon encountering debug.getmetatable; use a cache.
-	local check_raw = check
-	local cache = _G.setmetatable({}, {
-		__mode = "k",
-		__index = function(self, o)
-			check_raw(o)
-			self[o] = true
-			return true
-		end,
-	})
-	check = function(o)
-		return cache[o]
+	local cache = _G.setmetatable({}, {__mode = "k"})
+	local really_check = check
+	function check(o)
+		if not cache[o] then
+			really_check(o)
+			cache[o] = true
+		end
 	end
 end
 
