@@ -28,6 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "common/c_internal.h"
 #include "util/basic_macros.h"
+#include "porting.h"
 
 #define luamethod(class, name) {#name, class::l_##name}
 
@@ -82,7 +83,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 // LuaJIT FFI function prototypes.
 #if USE_LUAJIT
 #define FFI_FCT(rettype, name, ...) \
-	extern "C" rettype mtffi_##name(__VA_ARGS__) noexcept
+	extern "C" EXPORT_ATTRIBUTE rettype mtffi_##name(__VA_ARGS__) noexcept
 #else
 #define FFI_FCT(rettype, name, ...) \
 	UNUSED_ATTRIBUTE static rettype mtffi_##name(__VA_ARGS__) noexcept
