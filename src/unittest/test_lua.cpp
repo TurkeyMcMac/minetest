@@ -107,5 +107,6 @@ void TestLua::testLuaJITFFILinking()
 		lua_close(L);
 		throw;
 	}
+	lua_close(L);
 }
 #endif // USE_LUAJIT
