@@ -20,6 +20,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "test.h"
 #include "config.h"
+#include "script/lua_api/l_internal.h"
 
 extern "C" {
 #include <lua.h>
@@ -87,7 +88,7 @@ void TestLua::testLuaDestructors()
 }
 
 #if USE_LUAJIT
-extern "C" void mtffi_test_symbol() {}
+FFI_FCT(void, test_symbol) {}
 
 void TestLua::testLuaJITFFILinking()
 {
