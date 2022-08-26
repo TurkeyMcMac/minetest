@@ -6,20 +6,12 @@ local C = ffi.C
 local rawequal, rawget, rawset, type, tonumber, error, pcall =
 	_G.rawequal, _G.rawget, _G.rawset, _G.type, _G.tonumber, _G.error, _G.pcall
 local table_new = _G.table.new
-local band, rshift = _G.bit.band, _G.bit.rshift
-local get_content_id = _G.core.get_content_id
-local get_name_from_content_id = _G.core.get_name_from_content_id
 
 ffi.cdef[[
 struct MapNode {
 	uint16_t param0;
 	uint8_t param1, param2;
 };
-
-int32_t mtffi_vm_get_node(void *ud, double x, double y, double z);
-
-void mtffi_vm_set_node(void *ud, double x, double y, double z,
-		uint16_t content, uint8_t param1, uint8_t param2);
 
 bool mtffi_vm_lock_area(void *ud);
 
@@ -30,21 +22,9 @@ struct MapNode *mtffi_vm_get_data(void *ud);
 int32_t mtffi_vm_get_volume(void *ud);
 ]]
 
-local function check(o)
-	if not rawequal(get_real_metatable(o), metatable) then
+local function check(self)
+	if not rawequal(get_real_metatable(self), metatable) then
 		error("VoxelManip method called on invalid object")
-	end
-end
-
-if _G.jit.version_num < 20100 then
-	-- Versions below 2.1 abort upon encountering debug.getmetatable; use a cache.
-	local cache = _G.setmetatable({}, {__mode = "k"})
-	local really_check = check
-	function check(o)
-		if not cache[o] then
-			really_check(o)
-			cache[o] = true
-		end
 	end
 end
 
@@ -59,23 +39,6 @@ local function unlock_area(self)
 end
 
 local methodtable = metatable.__metatable
-
-function methodtable:get_node_at(pos)
-	check(self)
-	local data = C.mtffi_vm_get_node(self, pos.x, pos.y, pos.z)
-	local content = band(data, 0xffff)
-	local param1 = band(rshift(data, 16), 0xff)
-	local param2 = rshift(data, 24)
-	return {name = get_name_from_content_id(content), param1 = param1, param2 = param2}
-end
-
-function methodtable:set_node_at(pos, node)
-	check(self)
-	C.mtffi_vm_set_node(self, pos.x, pos.y, pos.z,
-			get_content_id(node.name),
-			tonumber(node.param1) or 0,
-			tonumber(node.param2) or 0)
-end
 
 local function bulk_getter(field)
 	local function get_protected(self, buf)

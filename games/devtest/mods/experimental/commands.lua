@@ -187,32 +187,6 @@ local function bench_vm_bulk_accessors()
 	return (finish - start) / 1000
 end
 
-local function bench_vm_single_accessors()
-	local vm = VoxelManip(vector.new(-50, -50, -50), vector.new(50, 50, 50))
-
-	local start = minetest.get_us_time()
-
-	local pos = vector.zero()
-	for z = -40, 40 do
-		for y = -40, 40 do
-			for x = -40, 40 do
-				pos.x, pos.y, pos.z = x, y, z
-				local node = vm:get_node_at(pos)
-				if math_random(0, 1) == 1 then
-					node.name = "mapgen_stone"
-				end
-				node.param1 = math_max(0, math_min(0xFF, node.param1 + math_random(-5, 5)))
-				node.param2 = math_max(0, math_min(0xFF, node.param2 + math_random(-5, 5)))
-				vm:set_node_at(pos, node)
-			end
-		end
-	end
-
-	local finish = minetest.get_us_time()
-
-	return (finish - start) / 1000
-end
-
 local using_ffi = core.global_exists("jit") and core.settings:get_bool("use_ffi", true)
 
 minetest.register_chatcommand("bench_vm_bulk_accessors", {
@@ -229,25 +203,6 @@ minetest.register_chatcommand("bench_vm_bulk_accessors", {
 		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
 
 		local time = bench_vm_bulk_accessors()
-
-		return true, string.format("Benchmark results: %.2f ms", time)
-	end,
-})
-
-minetest.register_chatcommand("bench_vm_single_accessors", {
-	params = "",
-	description = "Benchmark: VoxelManip single accessor functions",
-	func = function(name, param)
-		minetest.chat_send_player(name, "Benchmarking single accessors with FFI " ..
-			(using_ffi and "enabled" or "disabled"))
-
-		minetest.chat_send_player(name, "Warming up ...")
-
-		bench_vm_single_accessors()
-
-		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
-
-		local time = bench_vm_single_accessors()
 
 		return true, string.format("Benchmark results: %.2f ms", time)
 	end,

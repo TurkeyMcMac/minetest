@@ -518,24 +518,6 @@ const luaL_Reg LuaVoxelManip::methods[] = {
 
 // LuaJIT FFI functions that are used in builtin/ffi_overrides/voxelmanip.lua.
 
-FFI_FCT(int32_t, vm_get_node, void *ud, double x, double y, double z)
-{
-	MMVManip *vm = (*(LuaVoxelManip **)ud)->vm;
-	v3s16 pos = doubleToInt(v3d(x, y, z), 1.0);
-	MapNode n = vm->getNodeNoExNoEmerge(pos);
-	u32 data = (u32)n.getContent() | ((u32)n.getParam1() << 16) | ((u32)n.getParam2() << 24);
-	return (int32_t)data;
-}
-
-FFI_FCT(void, vm_set_node, void *ud, double x, double y, double z,
-		uint16_t content, uint8_t param1, uint8_t param2)
-{
-	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
-	v3s16 pos = doubleToInt(v3d(x, y, z), 1.0);
-	MapNode n(content, param1, param2);
-	vm->setNodeNoEmerge(pos, n);
-}
-
 FFI_FCT(bool, vm_lock_area, void *ud)
 {
 	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
