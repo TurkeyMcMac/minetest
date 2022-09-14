@@ -521,11 +521,10 @@ const luaL_Reg LuaVoxelManip::methods[] = {
 FFI_FCT(bool, vm_lock_area, void *ud)
 {
 	MMVManip *vm = (*(LuaVoxelManip**)ud)->vm;
-	if (!vm->m_area_locked) {
-		vm->m_area_locked = true;
-		return true;
-	}
-	return false;
+	if (vm->m_area_locked)
+		return false;
+	vm->m_area_locked = true;
+	return true;
 }
 
 FFI_FCT(void, vm_unlock_area, void *ud)
