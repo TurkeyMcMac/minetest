@@ -24,7 +24,7 @@ int32_t mtffi_vm_get_volume(void *ud);
 
 local function check(self)
 	if not rawequal(get_real_metatable(self), metatable) then
-		error("VoxelManip method called on invalid object")
+		error("VoxelManip method called on invalid object", 3)
 	end
 end
 
