@@ -22,3 +22,7 @@ local ffipath = _G.core.get_builtin_path() .. "ffi_overrides" .. _G.DIR_DELIM
 if _G.core.global_exists("VoxelManip") then
 	_G.assert(_G.loadfile(ffipath .. "voxelmanip.lua"))(ffi, insecure_environment)
 end
+
+if _G.PerlinNoiseMap then
+	_G.assert(_G.loadfile(ffipath .. "noise.lua"))(ffi, insecure_environment)
+end

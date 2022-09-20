@@ -761,3 +761,29 @@ const luaL_Reg LuaSecureRandom::methods[] = {
 	luamethod(LuaSecureRandom, next_bytes),
 	{0,0}
 };
+
+// LuaJIT FFI functions that are used in builtin/ffi_overrides/noise.lua.
+
+FFI_FCT(float*, pnm_get_result, void *ud)
+{
+	Noise *n = (*(LuaPerlinNoiseMap**)ud)->getNoise();
+	return n->result;
+}
+
+FFI_FCT(uint32_t, pnm_get_sx, void *ud)
+{
+	Noise *n = (*(LuaPerlinNoiseMap**)ud)->getNoise();
+	return n->sx;
+}
+
+FFI_FCT(uint32_t, pnm_get_sy, void *ud)
+{
+	Noise *n = (*(LuaPerlinNoiseMap**)ud)->getNoise();
+	return n->sy;
+}
+
+FFI_FCT(uint32_t, pnm_get_sz, void *ud)
+{
+	Noise *n = (*(LuaPerlinNoiseMap**)ud)->getNoise();
+	return n->sz;
+}

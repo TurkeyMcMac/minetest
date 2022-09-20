@@ -23,6 +23,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <algorithm>
 #include <cmath>
 #include "noise.h"
 #include <iostream>
@@ -347,15 +348,24 @@ float NoisePerlin3D(const NoiseParams *np, float x, float y, float z, s32 seed)
 }
 
 
-Noise::Noise(const NoiseParams *np_, s32 seed, u32 sx, u32 sy, u32 sz)
+Noise::Noise(const NoiseParams *np_, s32 seed_, u32 sx_, u32 sy_, u32 sz_):
+	np(*np_),
+	seed(seed_),
+	sx(std::max(sx_, (u32)1)),
+	sy(std::max(sy_, (u32)1)),
+	sz(std::max(sz_, (u32)1))
 {
-	np = *np_;
-	this->seed = seed;
-	this->sx   = sx;
-	this->sy   = sy;
-	this->sz   = sz;
-
-	allocBuffers();
+	resizeNoiseBuf(sz > 1);
+	try {
+		u32 size_2d = sx * sy;
+		size_t bufsize = size_2d * sz;
+		if (size_2d / sy != sx || bufsize / sz != size_2d)
+			throw InvalidNoiseParamsException();
+		gradient_buf = new float[bufsize];
+		result       = new float[bufsize];
+	} catch (std::bad_alloc &e) {
+		throw InvalidNoiseParamsException();
+	}
 }
 
 
@@ -365,43 +375,6 @@ Noise::~Noise()
 	delete[] persist_buf;
 	delete[] noise_buf;
 	delete[] result;
-}
-
-
-void Noise::allocBuffers()
-{
-	if (sx < 1)
-		sx = 1;
-	if (sy < 1)
-		sy = 1;
-	if (sz < 1)
-		sz = 1;
-
-	this->noise_buf = NULL;
-	resizeNoiseBuf(sz > 1);
-
-	delete[] gradient_buf;
-	delete[] persist_buf;
-	delete[] result;
-
-	try {
-		size_t bufsize = sx * sy * sz;
-		this->persist_buf  = NULL;
-		this->gradient_buf = new float[bufsize];
-		this->result       = new float[bufsize];
-	} catch (std::bad_alloc &e) {
-		throw InvalidNoiseParamsException();
-	}
-}
-
-
-void Noise::setSize(u32 sx, u32 sy, u32 sz)
-{
-	this->sx = sx;
-	this->sy = sy;
-	this->sz = sz;
-
-	allocBuffers();
 }
 
 

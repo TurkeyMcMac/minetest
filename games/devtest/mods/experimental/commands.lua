@@ -208,6 +208,118 @@ minetest.register_chatcommand("bench_vm_bulk_accessors", {
 	end,
 })
 
+local bench_np = {
+	offset = 0,
+	scale = 1,
+	spread = {x = 500, y = 500, z = 500},
+	seed = 571347,
+	octaves = 5,
+	persistence = 0.63,
+	lacunarity = 2.0,
+}
+
+_G._bench_noise_output = setmetatable({}, {__mode = "k"})
+
+minetest.register_chatcommand("bench_noise_2d_map", {
+	params = "",
+	description = "Benchmark: PerlinNoiseMap:get_2d_map",
+	func = function(name, param)
+		minetest.chat_send_player(name, "Benchmarking PerlinNoiseMap:get_2d_map with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
+
+		local noise = PerlinNoiseMap(bench_np, {x = 2000, y = 5000})
+
+		_G._bench_noise_output[noise:get_2d_map({x = 0, y = 0})] = true
+
+		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
+
+		local start = minetest.get_us_time()
+		_G._bench_noise_output[noise:get_2d_map({x = 0, y = 0})] = true
+		local finish = minetest.get_us_time()
+
+		local time = (finish - start) / 1000
+
+		return true, string.format("Benchmark results: %.2f ms", time)
+	end,
+})
+
+minetest.register_chatcommand("bench_noise_2d_map_flat", {
+	params = "",
+	description = "Benchmark: PerlinNoiseMap:get_2d_map_flat",
+	func = function(name, param)
+		minetest.chat_send_player(name, "Benchmarking PerlinNoiseMap:get_2d_map_flat with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
+
+		local noise = PerlinNoiseMap(bench_np, {x = 2000, y = 5000})
+
+		_G._bench_noise_output[noise:get_2d_map_flat({x = 0, y = 0})] = true
+
+		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
+
+		local start = minetest.get_us_time()
+		_G._bench_noise_output[noise:get_2d_map_flat({x = 0, y = 0})] = true
+		local finish = minetest.get_us_time()
+
+		local time = (finish - start) / 1000
+
+		return true, string.format("Benchmark results: %.2f ms", time)
+	end,
+})
+
+minetest.register_chatcommand("bench_noise_3d_map", {
+	params = "",
+	description = "Benchmark: PerlinNoiseMap:get_3d_map",
+	func = function(name, param)
+		minetest.chat_send_player(name, "Benchmarking PerlinNoiseMap:get_3d_map with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
+
+		local noise = PerlinNoiseMap(bench_np, vector.new(200, 200, 200))
+
+		_G._bench_noise_output[noise:get_3d_map(vector.zero())] = true
+
+		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
+
+		local start = minetest.get_us_time()
+		_G._bench_noise_output[noise:get_3d_map(vector.zero())] = true
+		local finish = minetest.get_us_time()
+
+		local time = (finish - start) / 1000
+
+		return true, string.format("Benchmark results: %.2f ms", time)
+	end,
+})
+
+minetest.register_chatcommand("bench_noise_3d_map_flat", {
+	params = "",
+	description = "Benchmark: PerlinNoiseMap:get_3d_map_flat",
+	func = function(name, param)
+		minetest.chat_send_player(name, "Benchmarking PerlinNoiseMap:get_3d_map_flat with FFI " ..
+			(using_ffi and "enabled" or "disabled"))
+
+		minetest.chat_send_player(name, "Warming up ...")
+
+		local noise = PerlinNoiseMap(bench_np, vector.new(200, 200, 200))
+
+		_G._bench_noise_output[noise:get_3d_map_flat(vector.zero())] = true
+
+		minetest.chat_send_player(name, "Warming up finished, now benchmarking ...");
+
+		local start = minetest.get_us_time()
+		_G._bench_noise_output[noise:get_3d_map_flat(vector.zero())] = true
+		local finish = minetest.get_us_time()
+
+		local time = (finish - start) / 1000
+
+		return true, string.format("Benchmark results: %.2f ms", time)
+	end,
+})
+
 local function advance_pos(pos, start_pos, advance_z)
 	if advance_z then
 		pos.z = pos.z + 2

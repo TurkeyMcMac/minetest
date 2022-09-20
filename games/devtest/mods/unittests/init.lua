@@ -180,6 +180,7 @@ dofile(modpath .. "/async_env.lua")
 dofile(modpath .. "/entity.lua")
 dofile(modpath .. "/content_ids.lua")
 dofile(modpath .. "/voxelmanip.lua")
+dofile(modpath .. "/noise.lua")
 
 --------------
 

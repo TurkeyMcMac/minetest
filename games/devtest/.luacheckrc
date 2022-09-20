@@ -28,6 +28,8 @@ read_globals = {
 	"Settings",
 	"check",
 	"PseudoRandom",
+	"PerlinNoise",
+	"PerlinNoiseMap",
 
 	string = {fields = {"split", "trim"}},
 	table  = {fields = {"copy", "getn", "indexof", "insert_all"}},

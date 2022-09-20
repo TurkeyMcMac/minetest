@@ -86,6 +86,8 @@ public:
 	LuaPerlinNoiseMap(const NoiseParams *np, s32 seed, v3s16 size);
 	~LuaPerlinNoiseMap();
 
+	inline Noise *getNoise() const noexcept { return noise; }
+
 	inline bool is3D() const { return noise->sz > 1; }
 
 	// LuaPerlinNoiseMap(np, size)

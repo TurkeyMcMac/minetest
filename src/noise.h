@@ -138,13 +138,11 @@ class Noise {
 public:
 	NoiseParams np;
 	s32 seed;
-	u32 sx;
-	u32 sy;
-	u32 sz;
+	const u32 sx, sy, sz;
 	float *noise_buf = nullptr;
 	float *gradient_buf = nullptr;
 	float *persist_buf = nullptr;
-	float *result = nullptr;
+	float *result = nullptr; // This must not mutate! Memory safety depends on it!
 
 	Noise(const NoiseParams *np, s32 seed, u32 sx, u32 sy, u32 sz=1);
 	~Noise();
@@ -185,7 +183,6 @@ public:
 	}
 
 private:
-	void allocBuffers();
 	void resizeNoiseBuf(bool is3d);
 	void updateResults(float g, float *gmap, const float *persistence_map,
 			size_t bufsize);
