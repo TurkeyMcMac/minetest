@@ -1413,7 +1413,6 @@ bool Game::createClient(const GameStartData &start_data)
 	if (g_touchscreengui) {
 		g_touchscreengui->init(texture_src);
 		g_touchscreengui->hide();
-		g_touchscreengui->setUseCrosshair(!isNoCrosshairAllowed());
 	}
 #endif
 	if (!connectToServer(start_data, &could_connect, &connect_aborted))
@@ -1450,6 +1449,11 @@ bool Game::createClient(const GameStartData &start_data)
 	if (client->modsLoaded())
 		client->getScript()->on_camera_ready(camera);
 	client->setCamera(camera);
+#ifdef HAVE_TOUCHSCREENGUI
+	if (g_touchscreengui) {
+		g_touchscreengui->setUseCrosshair(!isNoCrosshairAllowed());
+	}
+#endif
 
 	/* Clouds
 	 */
