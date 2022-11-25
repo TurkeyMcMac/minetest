@@ -147,7 +147,6 @@ are placeholders intended to be overwritten by the game.
 * `camera_btn.png`
 * `chat_btn.png`
 * `inventory_btn.png`
-* `rangeview_btn.png`
 
 * `debug_btn.png`
 * `gear_icon.png`

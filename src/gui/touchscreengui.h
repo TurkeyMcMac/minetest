@@ -48,7 +48,6 @@ typedef enum
 	fast_id,
 	debug_id,
 	camera_id,
-	range_id,
 	minimap_id,
 	toggle_chat_id,
 	chat_id,

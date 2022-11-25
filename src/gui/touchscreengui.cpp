@@ -106,9 +106,6 @@ static irr::EKEY_CODE id2keycode(touch_gui_button_id id)
 		case camera_id:
 			key = "camera_mode";
 			break;
-		case range_id:
-			key = "rangeselect";
-			break;
 		default:
 			break;
 	}
@@ -543,7 +540,6 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 	m_settingsbar.addButton(fast_id,    L"fast",      "fast_btn.png");
 	m_settingsbar.addButton(debug_id,   L"debug",     "debug_btn.png");
 	m_settingsbar.addButton(camera_id,  L"camera",    "camera_btn.png");
-	m_settingsbar.addButton(range_id,   L"rangeview", "rangeview_btn.png");
 	m_settingsbar.addButton(minimap_id, L"minimap",   "minimap_btn.png");
 
 	// Chat is shown by default, so chat_hide_btn.png is shown first.
