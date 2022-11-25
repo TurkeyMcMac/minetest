@@ -191,20 +191,23 @@ AutoHideButtonBar::~AutoHideButtonBar()
 void AutoHideButtonBar::addButton(touch_gui_button_id button_id,
 		const wchar_t *caption, const char *btn_image)
 {
-
+	errorstream << "START " << btn_image << std::endl;
 	if (!m_initialized) {
 		errorstream << "AutoHideButtonBar::addButton not yet initialized!"
 				<< std::endl;
 		return;
 	}
+	errorstream << "0" << std::endl;
 	int button_size = 0;
 
 	if ((m_dir == AHBB_Dir_Top_Bottom) || (m_dir == AHBB_Dir_Bottom_Top))
 		button_size = m_lower_right.X - m_upper_left.X;
 	else
 		button_size = m_lower_right.Y - m_upper_left.Y;
+	errorstream << "1" << std::endl;
 
 	irr::core::rect<int> current_button;
+	errorstream << "2" << std::endl;
 
 	if ((m_dir == AHBB_Dir_Right_Left) || (m_dir == AHBB_Dir_Left_Right)) {
 		int x_start = 0;
@@ -239,22 +242,33 @@ void AutoHideButtonBar::addButton(touch_gui_button_id button_id,
 		current_button = rect<s32>(m_upper_left.X, y_start,
 				m_lower_right.Y, y_end);
 	}
+	errorstream << "3" << std::endl;
 
 	auto *btn              = new button_info();
+	errorstream << "4" << std::endl;
 	btn->guibutton         = m_guienv->addButton(current_button,
 					nullptr, button_id, caption, nullptr);
+	errorstream << "5" << std::endl;
 	btn->guibutton->grab();
+	errorstream << "6" << std::endl;
 	btn->guibutton->setVisible(false);
+	errorstream << "7" << std::endl;
 	btn->guibutton->setEnabled(false);
+	errorstream << "8" << std::endl;
 	btn->repeatcounter     = -1;
+	errorstream << "9" << std::endl;
 	btn->keycode           = id2keycode(button_id);
+	errorstream << "10" << std::endl;
 	btn->immediate_release = true;
 	btn->ids.clear();
+	errorstream << "11" << std::endl;
 
 	load_button_texture(btn, btn_image, current_button, m_texturesource,
 			m_driver);
+	errorstream << "12" << std::endl;
 
 	m_buttons.push_back(btn);
+	errorstream << "END " << btn_image << std::endl;
 }
 
 void AutoHideButtonBar::addToggleButton(touch_gui_button_id button_id,
@@ -543,10 +557,8 @@ void TouchScreenGUI::init(ISimpleTextureSource *tsrc)
 	m_settingsbar.addButton(fast_id,    L"fast",      "fast_btn.png");
 	m_settingsbar.addButton(debug_id,   L"debug",     "debug_btn.png");
 	m_settingsbar.addButton(camera_id,  L"camera",    "camera_btn.png");
-#if 0
 	m_settingsbar.addButton(range_id,   L"rangeview", "rangeview_btn.png");
 	m_settingsbar.addButton(minimap_id, L"minimap",   "minimap_btn.png");
-#endif
 
 	// Chat is shown by default, so chat_hide_btn.png is shown first.
 	m_settingsbar.addToggleButton(toggle_chat_id, L"togglechat",
