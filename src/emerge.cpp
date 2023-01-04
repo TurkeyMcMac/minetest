@@ -622,6 +622,11 @@ MapBlock *EmergeThread::finishGen(v3s16 pos, BlockMakeData *bmdata,
 	ScopeProfiler sp(g_profiler,
 		"EmergeThread: after Mapgen::makeChunk", SPT_AVG);
 
+	if (!m_map->getBlockNoCreateNoEx(pos)) {
+		errorstream << "None before: " << PP(pos) << std::endl;
+		errorstream << "In modified before? " << (modified_blocks->find(pos) != modified_blocks->end()) << std::endl;
+	}
+
 	/*
 		Perform post-processing on blocks (invalidate lighting, queue liquid
 		transforms, etc.) to finish block make
@@ -632,6 +637,7 @@ MapBlock *EmergeThread::finishGen(v3s16 pos, BlockMakeData *bmdata,
 	if (!block) {
 		errorstream << "EmergeThread::finishGen: Couldn't grab block we "
 			"just generated: " << PP(pos) << std::endl;
+		errorstream << "In modified? " << (modified_blocks->find(pos) != modified_blocks->end()) << std::endl;
 		return NULL;
 	}
 
